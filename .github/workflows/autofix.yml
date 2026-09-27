@@ -1,0 +1,46 @@
+# Shared auto-fix for LedFx repositories. A repository opts in with a caller
+# workflow that MUST be named "autofix.ci" (autofix.ci identifies it by name):
+#
+#   name: autofix.ci
+#   on:
+#     pull_request:
+#   permissions:
+#     contents: read
+#   concurrency:
+#     group: autofix-${{ github.ref }}
+#     cancel-in-progress: true
+#   jobs:
+#     autofix:
+#       uses: LedFx/.github/.github/workflows/autofix.yml@<sha> # main
+#
+# It runs the repository's own .pre-commit-config.yaml with prek. Fixes are
+# committed to the PR by the autofix.ci app; this workflow has no write access.
+name: autofix
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
+        with:
+          install-only: true
+          prek-version: "0.5.3" # Renovate bumps this (renovate.json)
+      # Fixers modify files and exit non-zero; autofix.ci picks up the changes.
+      - run: prek run --all-files
+        continue-on-error: true
+      # Also cancels other workflows on this commit: a fix commit replaces it.
+      - id: autofix
+        uses: autofix-ci/action@c5b2d67aa2274e7b5a18224e8171550871fc7e4a # v1.3.4
+      # Nothing to fix but still failing: report what needs a human.
+      - if: steps.autofix.outputs.autofix_started != 'true'
+        run: prek run --all-files --show-diff-on-failure
