@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["github>LedFx/renovate-config"],
+  "customManagers": [
+    {
+      "description": "prek version the shared autofix workflow installs; keep it with the prek the repos lock.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/autofix\\.yml$/"],
+      "matchStrings": ["prek-version: \"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "prek",
+      "datasourceTemplate": "pypi"
+    }
+  ]
+}

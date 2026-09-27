@@ -6,6 +6,9 @@
 #     pull_request:
 #   permissions:
 #     contents: read
+#   concurrency:
+#     group: autofix-${{ github.ref }}
+#     cancel-in-progress: true
 #   jobs:
 #     autofix:
 #       uses: LedFx/.github/.github/workflows/autofix.yml@<sha> # main
@@ -31,6 +34,7 @@ jobs:
       - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
         with:
           install-only: true
+          prek-version: "0.5.3" # Renovate bumps this (renovate.json)
       # Fixers modify files and exit non-zero; autofix.ci picks up the changes.
       - run: prek run --all-files
         continue-on-error: true

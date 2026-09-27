@@ -21,11 +21,17 @@ autofix.ci app on it and add `.github/workflows/autofix.yml`:
       pull_request:
     permissions:
       contents: read
+    concurrency:
+      group: autofix-${{ github.ref }}
+      cancel-in-progress: true
     jobs:
       autofix:
         uses: LedFx/.github/.github/workflows/autofix.yml@<commit sha> # main
 
 Run the same hooks locally with `prek run --all-files` (or `prek install`).
+
+autofix.ci never commits changes under `.github/`. If a hook wants to change a
+file there, the whole fix is refused: fix it locally with prek instead.
 
 ## Contributing
 
