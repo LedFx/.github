@@ -13,8 +13,13 @@
 #     autofix:
 #       uses: LedFx/.github/.github/workflows/autofix.yml@<sha> # main
 #
-# It runs the repository's own .pre-commit-config.yaml with prek. Fixes are
-# committed to the PR by the autofix.ci app; this workflow has no write access.
+# It runs the repository's own .pre-commit-config.yaml with prek. A repo that
+# keeps tools like ruff in uv.lock can run them from the lock with
+# `language: system` hooks (`uv run --frozen --only-group dev ruff ...`); uv is
+# installed below whenever uv.lock exists, so autofix fixes with exactly the
+# version CI checks with. This workflow pins no tool versions for such repos.
+# Fixes are committed to the PR by the autofix.ci app; this workflow has no
+# write access.
 name: autofix
 
 on:
@@ -31,6 +36,11 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
+      # Only for repos that lock their tools with uv; hooks sync on demand.
+      - if: hashFiles('uv.lock') != ''
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: false # no cache poisoning surface in a fix workflow
       - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
         with:
           install-only: true
